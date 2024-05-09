@@ -1,13 +1,15 @@
 import pandas as pd
-import threading
+import asyncio
 from queue import Queue
 import concurrent.futures
 import random
 import logging
+import sqlite3
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.DEBUG, datefmt="%H:%M:%S")
-
+conn = sqlite3.connect(".\\scrap.db")
+cur = conn.cursor()
 
 def producer(queue, url):
     results = random.randint(1, 100) # get_web_data(url) Call your function to load web data.
@@ -19,8 +21,7 @@ def consumer(queue, event, database):
         try:
             results = queue.get(timeout=2)
             logging.info('Consumer: %i queue size: %i' % (results, queue.qsize()))
-            # Call your function to save web data.
-            # Save to sqlite/to_csv
+            cur.execute('''''')
         except Exception as e:
             logging.debug(e)
     logging.info('consumer exiting')
@@ -28,10 +29,10 @@ def consumer(queue, event, database):
 
 if __name__ == '__main__':
     queue = Queue(5)
-    event = threading.Event()
+    event = asyncio.Event()
 
-    x = threading.Thread(target=consumer, args=(queue, event, 'database',))
-    x.start()
+    #x = threading.Thread(target=consumer, args=(queue, event, 'database',))
+    #x.start()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         base_url = 'https://www.ramins_website.com/{yymmdd}.php'
