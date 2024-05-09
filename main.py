@@ -29,7 +29,7 @@ def scrap_bankier(link, first_page , last_page, content):
     for page_number in range(first_page, last_page):
         url = link.format(page_number)
         response = requests.get(url)
-        if response.status_code == 200:
+        if response.status_code == 200:`
             soup = bs(response.content, 'html.parser')
 
             td_elements_title = soup.find_all('td', class_='threadTitle')
