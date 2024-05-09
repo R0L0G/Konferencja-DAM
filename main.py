@@ -27,10 +27,6 @@ urls = {
 }
 
 
-async def on_data_added(data):
-    for item in data:
-        print(item)
-
 async def fetch(session, url):
     async with session.get(url) as response:
         return await response.text()
@@ -40,10 +36,10 @@ async def scrap_bankier_repost_async(link_key, first_page, last_page):
     async with aiohttp.ClientSession() as session:
         for page_number in range(first_page, last_page):
             url = urls[link_key].format(page_number)
-            await scrap_page(session, url, data, link_key)
+            await scrap_page(session, url, data)
     return data
 
-async def scrap_page(session, url, data, link_key):
+async def scrap_page(session, url, data):
     html = await fetch(session, url)
     soup = bs(html, 'html.parser')
 
@@ -58,9 +54,9 @@ async def scrap_page(session, url, data, link_key):
                 if repost_cell:
                     repost_count = int(repost_cell.span.text.strip())
                     if repost_count > 5:
-                        await link_re_async(session, thread_url, data, link_key)
+                        await link_re_async(session, thread_url, data)
 
-async def link_re_async(session, thread_url, data, link_key):
+async def link_re_async(session, thread_url, data):
     async with aiohttp.ClientSession() as session:
         thread_url = "https://www.bankier.pl/forum/" + thread_url
         html = await fetch(session, thread_url)
@@ -70,29 +66,28 @@ async def link_re_async(session, thread_url, data, link_key):
             link_element = li.find('a')
             if link_element:
                 href = link_element['href']
-                await re_scrap_async(session, href, data, link_key)
+                await re_scrap_async(session, href, data)
 
-async def re_scrap_async(session, link_url, data, link_key):
-    sql = [link_key]
-    link_url = "https://www.bankier.pl/forum/" + link_url
-    html = await fetch(session, link_url)
-    soup = bs(html, 'html.parser')
-    date_element = soup.find('time', class_='entry-date')
-    if date_element:
-        date = date_element['datetime']
-        sql.append(date)
-        print(f"Zebrałem datę: {date} dla linku: {link_url}")
-    box_content = soup.find('div', class_='box810 border1')
-    if box_content:
-        content_elements = box_content.find('div', class_='boxContent')
-        if content_elements:
-            list_pom = []
-            for content_element in content_elements:
-                content_text = content_element.text.strip()
-                list_pom.append(content_text)
-            sql.append(list_pom[1])
-    data.append(sql)
-    await on_data_added(data)
+async def re_scrap_async(session, link_url, data):
+    async with aiohttp.ClientSession() as session:
+        link_url = "https://www.bankier.pl/forum/" + link_url
+        html = await fetch(session, link_url)
+        soup = bs(html, 'html.parser')
+        date_element = soup.find('time', class_='entry-date')
+        if date_element:
+            date = date_element['datetime']
+            data.append(date)
+            print(f"Zebrałem datę: {date} dla linku: {link_url}")
+        box_content = soup.find('div', class_='box810 border1')
+        if box_content:
+            content_elements = box_content.find('div', class_='boxContent')
+            if content_elements:
+                list_pom = []
+                for content_element in content_elements:
+                    content_text = content_element.text.strip()
+                    list_pom.append(content_text)
+                data.append(list_pom[1])
+
 
 async def main():
     start_time = time.time()
@@ -143,7 +138,6 @@ async def main():
     data_pzu = results[18]
     data_santander = results[19]
 
-    print("Data dla results:", results)
     print("Data dla Aliora:", data_alior)
     print("Data dla Allegro:", data_allegro)
     print("Data dla Asseco Poland:", data_assecopol)
@@ -172,4 +166,4 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-#sahdghaiyfghuaiy
+
