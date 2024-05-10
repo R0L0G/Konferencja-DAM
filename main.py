@@ -2,6 +2,7 @@ import time
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup as bs
+import sqlite3
 
 urls = {
     'alior': 'https://www.bankier.pl/forum/forum_o_alior-bank,6,21,10000001210,{}.html',
@@ -26,10 +27,20 @@ urls = {
     'santander': 'https://www.bankier.pl/forum/forum_o_banco-santander,6,21,10000001447,{}.html'
 }
 
+conn = sqlite3.connect(".\\scrap.db")
+cur = conn.cursor()
+
+
+async def sql_insert(item):
+    cur.execute('''
+        INSERT INTO scrap_data VALUES(?, ?, ?, ?)
+    ''',(item[0], item[1], item[2], item[3]))
+    conn.commit()
 
 async def on_data_added(data):
     for item in data:
         print(item)
+        await sql_insert(item)
 
 async def fetch(session, url):
     async with session.get(url) as response:
@@ -151,11 +162,11 @@ async def main():
 
     results = await asyncio.gather(*tasks)
 
-
-
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"Całkowity czas wykonania: {execution_time} sekundy")
 
 if __name__ == "__main__":
     asyncio.run(main())
+    cur.close()
+    conn.close()
