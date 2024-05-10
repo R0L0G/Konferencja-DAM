@@ -23,5 +23,6 @@ def cleare_table():
 
 
 if __name__ == "__main__":
-    create_table()
+    pass
+    #create_table()
     #cleare_table()
