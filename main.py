@@ -61,6 +61,8 @@ async def scrap_page(session, url, data, link_key):
                         await link_re_async(session, thread_url, data, link_key)
 
 async def link_re_async(session, thread_url, data, link_key):
+    data1=[]
+    sql = [link_key]
     async with aiohttp.ClientSession() as session:
         thread_url = "https://www.bankier.pl/forum/" + thread_url
         html = await fetch(session, thread_url)
@@ -71,6 +73,21 @@ async def link_re_async(session, thread_url, data, link_key):
             if link_element:
                 href = link_element['href']
                 await re_scrap_async(session, href, data, link_key)
+        date_element = soup.find('time', class_='entry-date')
+        if date_element:
+            date = date_element['datetime']
+            sql.append(date)
+        box_content = soup.find('div', class_='box810 border1')
+        if box_content:
+            content_elements = box_content.find('div', class_='boxContent')
+            if content_elements:
+                list_pom = []
+                for content_element in content_elements:
+                    content_text = content_element.text.strip()
+                    list_pom.append(content_text)
+                sql.append(list_pom[1])
+                data.append(sql)
+                await on_data_added(data)
 
 async def re_scrap_async(session, link_url, data, link_key):
     sql = [link_key]
@@ -81,7 +98,6 @@ async def re_scrap_async(session, link_url, data, link_key):
     if date_element:
         date = date_element['datetime']
         sql.append(date)
-        print(f"Zebrałem datę: {date} dla linku: {link_url}")
     box_content = soup.find('div', class_='box810 border1')
     if box_content:
         content_elements = box_content.find('div', class_='boxContent')
@@ -122,6 +138,7 @@ async def main():
 
     results = await asyncio.gather(*tasks)
 
+    """
     data_alior = results[0]
     data_allegro = results[1]
     data_assecopol = results[2]
@@ -142,28 +159,8 @@ async def main():
     data_pko = results[17]
     data_pzu = results[18]
     data_santander = results[19]
+    """
 
-    print("Data dla results:", results)
-    print("Data dla Aliora:", data_alior)
-    print("Data dla Allegro:", data_allegro)
-    print("Data dla Asseco Poland:", data_assecopol)
-    print("Data dla CD Projekt:", data_cdprojekt)
-    print("Data dla Cyfrowy Polsat:", data_cyfrpolsat)
-    print("Data dla Dino Polska:", data_dinopl)
-    print("Data dla Jastrzębska Spółka Węglowa:", data_jsw)
-    print("Data dla Kety:", data_kety)
-    print("Data dla KGHM:", data_kghm)
-    print("Data dla Kruk:", data_kruk)
-    print("Data dla LPP:", data_lpp)
-    print("Data dla mBank:", data_mbank)
-    print("Data dla Orange Polska:", data_orange)
-    print("Data dla Pekao:", data_pekao)
-    print("Data dla Pepco Group NV:", data_pepco)
-    print("Data dla PGE:", data_pge)
-    print("Data dla PKN Orlen:", data_pknorlen)
-    print("Data dla PKO Bank Polski:", data_pko)
-    print("Data dla PZU:", data_pzu)
-    print("Data dla Santander Bank Polska:", data_santander)
 
     end_time = time.time()
     execution_time = end_time - start_time
