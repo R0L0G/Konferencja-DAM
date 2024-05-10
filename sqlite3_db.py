@@ -7,7 +7,8 @@ def create_table():
     CREATE TABLE IF NOT EXISTS scrap_data(nazwa_spolki TEXT,
     data_posta TEXT,
      liczba_slow INTEGER,
-     text TEXT)
+     text TEXT,
+     page INTEGER)
     ''')
     conn.commit()
     cur.close()
@@ -30,10 +31,17 @@ def select():
     cur.close()
     conn.close()
 
-
+def drop_table():
+    cur.execute('''
+    DROP TABLE scrap_data
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
 
 if __name__ == "__main__":
     pass
     #create_table()
     #cleare_table()
     #select()
+    #drop_table()
