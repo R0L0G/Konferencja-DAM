@@ -21,7 +21,19 @@ def cleare_table():
     cur.close()
     conn.close()
 
+def select():
+    cur.execute('''
+    SELECT * FROM scrap_data
+    ''',)
+    conn.commit()
+    print(cur.fetchone())
+    cur.close()
+    conn.close()
+
+
 
 if __name__ == "__main__":
-    create_table()
+    pass
+    #create_table()
     #cleare_table()
+    #select()

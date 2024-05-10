@@ -5,6 +5,9 @@ import concurrent.futures
 import random
 import logging
 import sqlite3
+from main import scrap_bankier_repost_async
+
+
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.DEBUG, datefmt="%H:%M:%S")
@@ -31,3 +34,28 @@ def consumer(queue, event, database):
 if __name__ == '__main__':
     queue = Queue(5)
     event = asyncio.Event()
+
+    tasks = [
+        scrap_bankier_repost_async('alior', 1, 2),
+        scrap_bankier_repost_async('allegro', 1, 2),
+        scrap_bankier_repost_async('assecopol', 1, 2),
+        scrap_bankier_repost_async('cdprojekt', 1, 2),
+        scrap_bankier_repost_async('cyfrpolsat', 1, 2),
+        scrap_bankier_repost_async('dinopl', 1, 2),
+        scrap_bankier_repost_async('jsw', 1, 2),
+        scrap_bankier_repost_async('kety', 1, 2),
+        scrap_bankier_repost_async('kghm', 1, 2),
+        scrap_bankier_repost_async('kruk', 1, 2),
+        scrap_bankier_repost_async('lpp', 1, 2),
+        scrap_bankier_repost_async('mbank', 1, 2),
+        scrap_bankier_repost_async('orange', 1, 2),
+        scrap_bankier_repost_async('pekao', 1, 2),
+        scrap_bankier_repost_async('pepco', 1, 2),
+        scrap_bankier_repost_async('pge', 1, 2),
+        scrap_bankier_repost_async('pknorlen', 1, 2),
+        scrap_bankier_repost_async('pko', 1, 2),
+        scrap_bankier_repost_async('pzu', 1, 2),
+        scrap_bankier_repost_async('santander', 1, 2)
+        ]
+
+

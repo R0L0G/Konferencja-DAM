@@ -29,7 +29,7 @@ urls = {
 
 async def on_data_added(data):
     for item in data:
-        print(item[0])
+        print(item)
 
 async def fetch(session, url):
     async with session.get(url) as response:
