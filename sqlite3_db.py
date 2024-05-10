@@ -7,8 +7,7 @@ def create_table():
     CREATE TABLE IF NOT EXISTS scrap_data(nazwa_spolki TEXT,
     data_posta TEXT,
      liczba_slow INTEGER,
-     text TEXT,
-     page INTEGER)
+     text TEXT)
     ''')
     conn.commit()
     cur.close()
@@ -43,5 +42,5 @@ if __name__ == "__main__":
     pass
     #create_table()
     #cleare_table()
-    #select()
+    select()
     #drop_table()
