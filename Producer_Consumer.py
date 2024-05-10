@@ -8,11 +8,12 @@ import sqlite3
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.DEBUG, datefmt="%H:%M:%S")
+
 conn = sqlite3.connect(".\\scrap.db")
 cur = conn.cursor()
 
 def producer(queue, url):
-    results = random.randint(1, 100) # get_web_data(url) Call your function to load web data.
+    results = 0
     logging.debug('putting %i' % results)
     queue.put(results)
 
@@ -30,16 +31,3 @@ def consumer(queue, event, database):
 if __name__ == '__main__':
     queue = Queue(5)
     event = asyncio.Event()
-
-    #x = threading.Thread(target=consumer, args=(queue, event, 'database',))
-    #x.start()
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        base_url = 'https://www.ramins_website.com/{yymmdd}.php'
-        for date in pd.date_range(pd.datetime(2019, 8, 4), pd.datetime.today()):
-            url = base_url.format(yymmdd=date.strftime('%y%m%d'))
-            # Start producer thread to fetch one url.
-            executor.submit(producer, queue, url)
-
-    # Notify consumer that all producers have completed.
-    event.set()
