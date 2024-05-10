@@ -34,7 +34,7 @@ cur = conn.cursor()
 async def sql_insert(item):
     cur.execute('''
         INSERT INTO scrap_data VALUES(?, ?, ?, ?)
-    ''',(item[0], item[1], item[2], item[3]))
+    ''',(item[0], item[1], item[2],item[3]))
     conn.commit()
 
 async def on_data_added(data):
