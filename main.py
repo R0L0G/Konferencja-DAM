@@ -37,6 +37,7 @@ async def sql_insert(item):
     ''',(item[0], item[1], item[2],item[3]))
     conn.commit()
 
+
 async def on_data_added(data):
     for item in data:
         print(item)
@@ -51,10 +52,10 @@ async def scrap_bankier_repost_async(link_key, first_page, last_page):
     async with aiohttp.ClientSession() as session:
         for page_number in range(first_page, last_page):
             url = urls[link_key].format(page_number)
-            await scrap_page(session, url, data, link_key)
+            await scrap_page(session, url, data, link_key,page_number)
     return data
 
-async def scrap_page(session, url, data, link_key):
+async def scrap_page(session, url, data, link_key,page_number):
     html = await fetch(session, url)
     soup = bs(html, 'html.parser')
 
@@ -69,11 +70,12 @@ async def scrap_page(session, url, data, link_key):
                 if repost_cell:
                     repost_count = int(repost_cell.span.text.strip())
                     if repost_count > 5:
-                        await link_re_async(session, thread_url, data, link_key)
+                        await link_re_async(session, thread_url, data, link_key,page_number)
 
-async def link_re_async(session, thread_url, data, link_key):
+async def link_re_async(session, thread_url, data, link_key,page_number):
     data1=[]
     sql = [link_key]
+    sql.append(page_number)
     async with aiohttp.ClientSession() as session:
         thread_url = "https://www.bankier.pl/forum/" + thread_url
         html = await fetch(session, thread_url)
@@ -104,10 +106,11 @@ async def link_re_async(session, thread_url, data, link_key):
             link_element = li.find('a')
             if link_element:
                 href = link_element['href']
-                await re_scrap_async(session, href, data, link_key)
+                await re_scrap_async(session, href, data, link_key,page_number)
 
-async def re_scrap_async(session, link_url, data, link_key):
+async def re_scrap_async(session, link_url, data, link_key,page_number):
     sql = [link_key]
+    sql.append(page_number)
     link_url = "https://www.bankier.pl/forum/" + link_url
     html = await fetch(session, link_url)
     soup = bs(html, 'html.parser')
@@ -138,7 +141,7 @@ async def main():
     start_time = time.time()
 
     tasks = [
-        scrap_bankier_repost_async('alior', 1, 2),
+        scrap_bankier_repost_async('alior', 1, 3),
         scrap_bankier_repost_async('allegro', 1, 2),
         scrap_bankier_repost_async('assecopol', 1, 2),
         scrap_bankier_repost_async('cdprojekt', 1, 2),
