@@ -5,6 +5,7 @@ cur = conn.cursor()
 def create_table():
     cur.execute('''
     CREATE TABLE IF NOT EXISTS scrap_data(nazwa_spolki TEXT,
+    strona INTEGER,
     data_posta TEXT,
      liczba_slow INTEGER,
      text TEXT)
@@ -42,5 +43,5 @@ if __name__ == "__main__":
     pass
     #create_table()
     #cleare_table()
-    select()
+    #select()
     #drop_table()
