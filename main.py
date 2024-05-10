@@ -67,12 +67,6 @@ async def link_re_async(session, thread_url, data, link_key):
         thread_url = "https://www.bankier.pl/forum/" + thread_url
         html = await fetch(session, thread_url)
         soup = bs(html, 'html.parser')
-        li_elements = soup.find_all('li', class_='level-1')
-        for li in li_elements:
-            link_element = li.find('a')
-            if link_element:
-                href = link_element['href']
-                await re_scrap_async(session, href, data, link_key)
         date_element = soup.find('time', class_='entry-date')
         if date_element:
             date = date_element['datetime']
@@ -85,9 +79,21 @@ async def link_re_async(session, thread_url, data, link_key):
                 for content_element in content_elements:
                     content_text = content_element.text.strip()
                     list_pom.append(content_text)
+                space_count = 0
+                for char in list_pom[1]:
+                    if char == ' ':
+                        space_count += 1
+                sql.append(space_count)
                 sql.append(list_pom[1])
-                data.append(sql)
-                await on_data_added(data)
+                data1.append(sql)
+                if list_pom[1] != '(wiadomość usunięta przez moderatora)':
+                    await on_data_added(data1)
+        li_elements = soup.find_all('li', class_='level-1')
+        for li in li_elements:
+            link_element = li.find('a')
+            if link_element:
+                href = link_element['href']
+                await re_scrap_async(session, href, data, link_key)
 
 async def re_scrap_async(session, link_url, data, link_key):
     sql = [link_key]
@@ -106,9 +112,16 @@ async def re_scrap_async(session, link_url, data, link_key):
             for content_element in content_elements:
                 content_text = content_element.text.strip()
                 list_pom.append(content_text)
+            space_count = 0
+            for char in list_pom[1]:
+                if char == ' ':
+                    space_count += 1
+            sql.append(space_count)
             sql.append(list_pom[1])
-    data.append(sql)
-    await on_data_added(data)
+            if list_pom[1] != '(wiadomość usunięta przez moderatora)':
+                data.append(sql)
+                await on_data_added(data)
+
 
 async def main():
     start_time = time.time()
@@ -138,28 +151,6 @@ async def main():
 
     results = await asyncio.gather(*tasks)
 
-    """
-    data_alior = results[0]
-    data_allegro = results[1]
-    data_assecopol = results[2]
-    data_cdprojekt = results[3]
-    data_cyfrpolsat = results[4]
-    data_dinopl = results[5]
-    data_jsw = results[6]
-    data_kety = results[7]
-    data_kghm = results[8]
-    data_kruk = results[9]
-    data_lpp = results[10]
-    data_mbank = results[11]
-    data_orange = results[12]
-    data_pekao = results[13]
-    data_pepco = results[14]
-    data_pge = results[15]
-    data_pknorlen = results[16]
-    data_pko = results[17]
-    data_pzu = results[18]
-    data_santander = results[19]
-    """
 
 
     end_time = time.time()
