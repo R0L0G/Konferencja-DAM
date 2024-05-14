@@ -3,6 +3,9 @@ import aiohttp
 import asyncio
 from bs4 import BeautifulSoup as bs
 import sqlite3
+import tracemalloc
+
+
 
 urls = {
     'alior': 'https://www.bankier.pl/forum/forum_o_alior-bank,6,21,10000001210,{}.html',
@@ -37,23 +40,36 @@ async def sql_insert(item):
     ''',(item[0], item[1], item[2], item[3], item[4]))
     conn.commit()
 
+def select_error():
+    cur.execute('''
+    SELECT nazwa_spolki, MAX(strona) FROM scrap_data 
+    GROUP BY nazwa_spolki
+    ''')
+    conn.commit()
+    lista_stron = cur.fetchall()
+    slownik_stron = dict(lista_stron)
+    return slownik_stron
+
 
 async def on_data_added(data):
     for item in data:
         print(item)
         await sql_insert(item)
 
+
 async def fetch(session, url):
     async with session.get(url) as response:
         return await response.text()
 
+
 async def scrap_bankier_repost_async(link_key, first_page, last_page):
     data = []
     async with aiohttp.ClientSession() as session:
-        for page_number in range(first_page, last_page):
+        for page_number in range(first_page, last_page + 1):
             url = urls[link_key].format(page_number)
-            await scrap_page(session, url, data, link_key,page_number)
+            await scrap_page(session, url, data, link_key, page_number)
     return data
+
 
 async def scrap_page(session, url, data, link_key,page_number):
     html = await fetch(session, url)
@@ -73,7 +89,7 @@ async def scrap_page(session, url, data, link_key,page_number):
                         await link_re_async(session, thread_url, data, link_key,page_number)
 
 async def link_re_async(session, thread_url, data, link_key,page_number):
-    data1=[]
+    data1 = []
     sql = [link_key]
     sql.append(page_number)
     async with aiohttp.ClientSession() as session:
@@ -139,8 +155,8 @@ async def re_scrap_async(session, link_url, data, link_key,page_number):
 
 async def main():
     start_time = time.time()
-
-    tasks = [
+    '''
+    tasks_old = [
         scrap_bankier_repost_async('alior', 7, 46),
         scrap_bankier_repost_async('allegro', 48, 234),
         scrap_bankier_repost_async('assecopol', 2, 9),
@@ -156,20 +172,52 @@ async def main():
         scrap_bankier_repost_async('orange', 2, 7),
         scrap_bankier_repost_async('pekao', 10, 39),
         scrap_bankier_repost_async('pepco', 77, 187),
-        scrap_bankier_repost_async('pge', 149, 120),
+        scrap_bankier_repost_async('pge', 49, 120),
         scrap_bankier_repost_async('pknorlen', 363, 1338),
         scrap_bankier_repost_async('pko', 19, 118),
         scrap_bankier_repost_async('pzu', 13, 49),
         scrap_bankier_repost_async('santander', 1, 2)
     ]
 
-    results = await asyncio.gather(*tasks)
+    '''
+    #liczba scrapowantych stron : 39+186+7+120+60+56+119+7+117+6+96+13+5+29+97+24+59+83+36+1+19= 1179 stron na godzinę 11:13
+    # [7, 48, 2, 312, 98, 13, 227, 2, 105, 4, 60, 7, 2, 10, 77, 49, 363, 19, 13, 1] start
+    # [21, 119, 9, 374, 158, 69, 288, 9, 157, 10, 116, 20, 7, 39, 95, 49, 380, 31, 19, 1] godzina: 00:05
+    # [29, 125, 9, 375, 158, 69, 289, 9, 160, 10, 122, 20, 7, 39, 98, 49, 382, 34, 21, 1] godzina 00:39
+    #[38, 133, 9, 380, 158, 69, 291, 9, 163, 10, 127, 20, 7, 39, 102, 49, 384, 38, 23, 1] godzina 1:12
+    #[46, 234, 9, 432, 158, 69, 346, 9, 222, 10, 156, 20, 7, 39, 174, 73, 422, 102, 49, 1] godzina 11:13
+    #[46, 234, 9, 462, 158, 69, 378, 9, 250, 10, 156, 20, 7, 39, 187, 93, 455, 118, 49, 1] godzina 16.32
+
+
+    while True:
+
+        firmy = ['alior', 'allegro', 'assecopol', 'cdprojekt', 'cyfrpolsat', 'dinopl', 'jsw', 'kety', 'kghm', 'kruk',
+                 'lpp', 'mbank', 'orange', 'pekao', 'pepco', 'pge', 'pknorlen', 'pko', 'pzu', 'santander']
+        start_pages = list(select_error().values())
+        end_pages = [46, 234, 9, 1161, 158, 69, 1112, 9, 264, 10, 156, 20, 7, 39, 187, 120, 1338, 118, 49, 2]
+
+        tasks2 = [asyncio.create_task(scrap_bankier_repost_async(x, y, z)) for (x, y, z) in zip(firmy, start_pages, end_pages)]
+        try:
+            await asyncio.gather(*tasks2)
+        except:
+            for t in tasks2:
+                t.cancel()
+            continue
+        else:
+            print('DONE')
+            break
 
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"Całkowity czas wykonania: {execution_time} sekundy")
 
 if __name__ == "__main__":
+
+    #tracemalloc.start()
+
+
     asyncio.run(main())
+    #start_pages = list(select_error().values())
+    #print(start_pages)
     cur.close()
     conn.close()
