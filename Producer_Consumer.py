@@ -1,8 +1,5 @@
-import pandas as pd
 import asyncio
 from queue import Queue
-import concurrent.futures
-import random
 import logging
 import sqlite3
 from main import scrap_bankier_repost_async
@@ -57,5 +54,25 @@ if __name__ == '__main__':
         scrap_bankier_repost_async('pzu', 1, 2),
         scrap_bankier_repost_async('santander', 1, 2)
         ]
+
+#||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+async def sql_insert(batch):
+    cur.executemany('''
+        INSERT INTO scrap_data VALUES(?, ?, ?, ?, ?)
+    ''', batch)
+    conn.commit()
+
+
+async def on_data_added(data):
+    batch = []
+    for item in data:
+        print(tuple(item))
+        batch.append(tuple(item))
+        if len(batch) == 100:
+            await sql_insert(batch)
+        elif len(batch) > 100:
+            batch = []
 
 

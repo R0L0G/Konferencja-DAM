@@ -18,10 +18,10 @@ def cleare_table():
 
 def select():
     cur.execute('''
-    SELECT * FROM scrap_data
+    SELECT COUNT(*) FROM scrap_data
     ''',)
     conn.commit()
-    print(cur.fetchone())
+    print(cur.fetchall())
 
 def drop_table():
     cur.execute('''
@@ -61,15 +61,15 @@ def create_table_duplicates_free():
 
 
 def duplicats_free_table():
-    cur.execute('''
-    SELECT DISTINCT * FROM scrap_data
+    cur_free.execute('''
+    SELECT * FROM duplicates_free
     ''')
-    conn.commit()
-    data = cur.fetchall()
-    cur_free.executemany('''
-    INSERT INTO duplicates_free VALUES(?, ?, ?, ?, ?)
-       ''', data)
     conn_dupfree.commit()
+    data = cur_free.fetchall()
+    cur.executemany('''
+    INSERT INTO scrap_data VALUES(?, ?, ?, ?, ?)
+       ''', data)
+    conn.commit()
 
 def clear_duplicates_free_table():
     cur_free.execute('''
@@ -85,6 +85,16 @@ def coutn_db():
     conn_dupfree.commit()
     print(cur_free.fetchall())
 
+def select_dup_free():
+    cur_free.execute('''
+    SELECT nazwa_spolki, MAX(strona) FROM duplicates_free 
+    GROUP BY nazwa_spolki
+    ''')
+    conn_dupfree.commit()
+    lista_stron = cur_free.fetchall()
+    slownik_stron = dict(lista_stron)
+    return list(slownik_stron.values())
+
 
 if __name__ == "__main__":
     conn = sqlite3.connect(".\\scrap.db")
@@ -93,7 +103,7 @@ if __name__ == "__main__":
     cur_free = conn_dupfree.cursor()
     #create_table()
     #cleare_table()
-    #select()
+    select()
     #drop_table()
     #select_error()
     #select_spolka()
@@ -101,7 +111,8 @@ if __name__ == "__main__":
     #create_table_duplicates_free()
     #duplicats_free_table()
     #clear_duplicates_free_table()
-    coutn_db()
+    #print(select_dup_free())
+    #coutn_db()
 
     cur.close()
     conn.commit()

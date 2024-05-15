@@ -34,11 +34,12 @@ conn = sqlite3.connect(".\\scrap.db")
 cur = conn.cursor()
 
 
-async def sql_insert(item):
-    cur.execute('''
+async def sql_insert(batch):
+    cur.executemany('''
         INSERT INTO scrap_data VALUES(?, ?, ?, ?, ?)
-    ''',(item[0], item[1], item[2], item[3], item[4]))
+    ''', batch)
     conn.commit()
+
 
 def select_error():
     cur.execute('''
@@ -52,9 +53,14 @@ def select_error():
 
 
 async def on_data_added(data):
+    batch = []
     for item in data:
-        print(item)
-        await sql_insert(item)
+        print(tuple(item))
+        batch.append(tuple(item))
+        if len(batch) == 1000:
+            await sql_insert(batch)
+        elif len(batch) > 1000:
+            batch = []
 
 
 async def fetch(session, url):
@@ -180,14 +186,19 @@ async def main():
     ]
 
     '''
-    #liczba scrapowantych stron : 39+186+7+120+60+56+119+7+117+6+96+13+5+29+97+24+59+83+36+1+19= 1179 stron na godzinę 11:13
+    #liczba scrapowantych stron :  39+186+7+611+145+56+379+7+159+6+96+13+5+29+110+71+387+99+36+1+11 = 2453  stron na 15.05. godzina 16:24
     # [7, 48, 2, 312, 98, 13, 227, 2, 105, 4, 60, 7, 2, 10, 77, 49, 363, 19, 13, 1] start
-    # [21, 119, 9, 374, 158, 69, 288, 9, 157, 10, 116, 20, 7, 39, 95, 49, 380, 31, 19, 1] godzina: 00:05
+    # [21, 119, 9, 374, 158, 69, 288, 9, 157, 10, 116, 20, 7, 39, 95, 49, 380, 31, 19, 1] godzina: 00:05 14.05.2024
     # [29, 125, 9, 375, 158, 69, 289, 9, 160, 10, 122, 20, 7, 39, 98, 49, 382, 34, 21, 1] godzina 00:39
     #[38, 133, 9, 380, 158, 69, 291, 9, 163, 10, 127, 20, 7, 39, 102, 49, 384, 38, 23, 1] godzina 1:12
     #[46, 234, 9, 432, 158, 69, 346, 9, 222, 10, 156, 20, 7, 39, 174, 73, 422, 102, 49, 1] godzina 11:13
     #[46, 234, 9, 462, 158, 69, 378, 9, 250, 10, 156, 20, 7, 39, 187, 93, 455, 118, 49, 1] godzina 16.32
+    #[46, 234, 9, 465, 158, 69, 383, 9, 253, 10, 156, 20, 7, 39, 187, 96, 459, 118, 49, 1] godzina 18:35
+    #[46, 234, 9, 494, 158, 69, 421, 9, 264, 10, 156, 20, 7, 39, 187, 120, 507, 118, 49, 1] godzina 01:01 15.05.2024
+    #[46, 234, 9, 564, 158, 69, 490, 9, 264, 10, 156, 20, 7, 39, 187, 120, 575, 118, 49, 1] godzina 14:24
+    #[46, 234, 9, 709, 158, 69, 606, 9, 264, 10, 156, 20, 7, 39, 187, 120, 750, 118, 49, 1] godzina 16:05
 
+    #[46, 234, 9, 1161, 158, 69, 1112, 9, 264, 10, 156, 20, 7, 39, 187, 120, 1338, 118, 49, 2] DONE
 
     while True:
 
@@ -197,6 +208,16 @@ async def main():
         end_pages = [46, 234, 9, 1161, 158, 69, 1112, 9, 264, 10, 156, 20, 7, 39, 187, 120, 1338, 118, 49, 2]
 
         tasks2 = [asyncio.create_task(scrap_bankier_repost_async(x, y, z)) for (x, y, z) in zip(firmy, start_pages, end_pages)]
+        index = []
+        for i in range(0, len(tasks2)):
+            if end_pages[i] == start_pages[i]:
+                index.append(i)
+            else:
+                continue
+        for j in sorted(index, reverse=True):
+            del tasks2[j]
+        print(len(tasks2))
+
         try:
             await asyncio.gather(*tasks2)
         except:
@@ -216,8 +237,8 @@ if __name__ == "__main__":
     #tracemalloc.start()
 
 
-    asyncio.run(main())
-    #start_pages = list(select_error().values())
-    #print(start_pages)
+    #asyncio.run(main())
+    start_pages = list(select_error().values())
+    print(start_pages)
     cur.close()
     conn.close()
